@@ -1,0 +1,11 @@
+app = "tg-userbot-oc"
+
+[build]
+
+[env]
+  API_ID = "31564152"
+  API_HASH = "13cd51d6b053ef344ed01854075b0e4d"
+
+[mounts]
+  source = "tg_data"
+  destination = "/app"
