@@ -15,9 +15,10 @@ if [ -f /app/tg_userbot.session ]; then
     cp -n /app/tg_userbot.session /data/tg_userbot.session 2>/dev/null || true
 fi
 
-cd /data
+# Остаемся в рабочей директории /app, где лежат main.py и папка infinity!
+cd /app
 
 while true; do
-    python /app/main.py
+    python main.py
     sleep 10
 done
