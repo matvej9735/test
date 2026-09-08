@@ -3,16 +3,31 @@ import os
 import asyncio
 import logging
 import importlib
+from threading import Thread
+from flask import Flask
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from telethon import TelegramClient
-from config import API_ID, API_HASH, SESSION_NAME, SESSION_DIR
+from telethon.sessions import StringSession
+from config import API_ID, API_HASH
 
+# Настройка логирования
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     level=logging.INFO,
 )
+
+# 1. Создаем мини-веб-сервер для Keep-Alive (чтобы Fly.io не усыплял бота)
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Userbot is alive and running!"
+
+def run_web():
+    port = int(os.getenv("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
 
 def load_infinity_modules(client):
     """Автоматическая регистрация хэндлеров из папки infinity"""
@@ -34,8 +49,8 @@ def load_infinity_modules(client):
                 logging.error("Ошибка загрузки модуля %s: %s", file, e)
 
 async def main():
-    session_path = os.path.join(SESSION_DIR, SESSION_NAME)
-    client = TelegramClient(session_path, API_ID, API_HASH)
+    session_string = os.getenv("TG_SESSION", "")
+    client = TelegramClient(StringSession(session_string), API_ID, API_HASH)
 
     load_infinity_modules(client)
 
@@ -52,4 +67,10 @@ async def main():
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
+    # Запускаем веб-сервер в отдельном потоке
+    web_thread = Thread(target=run_web)
+    web_thread.daemon = True
+    web_thread.start()
+
+    # Запускаем юзербота
     asyncio.run(main())
